@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Neuko Hit Game</title>
+  <link rel="stylesheet" href="game.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="game" role="application" aria-label="Neuko Hit Game">
+      <div class="top">
+        <div class="title">🕳️ Neuko Hit Game</div>
+        <div class="controls">
+          <button id="startBtn">Start</button>
+          <button id="stopBtn" class="secondary">Stop</button>
+          <div class="stats">
+            <div class="stat">Time: <span id="time">30</span>s</div>
+            <div class="stat">Score: <span id="score">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="board" class="board" aria-live="polite"></div>
+
+      <div class="footer">
+        <div class="small">Only the heads appear while popping up. Bottoms remain hidden.</div>
+        <div class="small">Ready — upload to GitHub and deploy to Vercel.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

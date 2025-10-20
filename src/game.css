@@ -1,0 +1,40 @@
+
+:root{--bg:#071026;--card:#071726;--accent:#ffb300}
+*{box-sizing:border-box;font-family:Inter,Segoe UI,system-ui,Arial}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#021428 0%,#071026 100%);color:#e6eef8}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.game{width:920px;max-width:100%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.title{font-size:20px;font-weight:700;display:flex;gap:12px;align-items:center}
+.controls{display:flex;gap:8px;align-items:center}
+button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+.stats{display:flex;gap:14px;align-items:center}
+.stat{background:rgba(255,255,255,0.02);padding:8px 12px;border-radius:10px;font-weight:600}
+
+.board{width:640px;max-width:100%;margin:16px auto 8px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border-radius:12px}
+.hole{position:relative;height:160px;background:radial-gradient(circle at 50% 30%, #0b2b3f, #041726 35%, #021321 60%);border-radius:12px;overflow:visible;display:flex;align-items:end;justify-content:center}
+
+.cap{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;width:82%;height:40px;background:linear-gradient(180deg,#061626,#03202b);border-radius:999px;box-shadow: inset 0 -6px 16px rgba(0,0,0,0.5);z-index:3}
+
+/* head container masks lower body - only top section visible */
+.headWrap{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;width:88px;height:88px;border-radius:999px;overflow:hidden;pointer-events:auto;z-index:4}
+.headInner{position:absolute;left:50%;transform:translate(-50%,40%);width:160px;height:160px;transition:transform 220ms cubic-bezier(.2,.9,.3,1),filter 200ms;}
+.pop .headInner{transform:translate(-50%,-18%);}
+
+.headWrap.hit .headInner{animation:shake 300ms ease-out;}
+@keyframes shake{0%{transform:translate(-50%,-18%) rotate(0)}25%{transform:translate(-50%,-18%) rotate(-12deg)}50%{transform:translate(-50%,-18%) rotate(8deg)}75%{transform:translate(-50%,-18%) rotate(-6deg)}100%{transform:translate(-50%,-18%) rotate(0)} }
+
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.overlay svg{width:88px;height:88px}
+
+.particle{position:absolute;width:10px;height:10px;border-radius:50%;opacity:0.95;transform:translate(-50%,-50%);animation:part 700ms ease-out forwards}
+@keyframes part{to{transform:translate(-50%,-160%) scale(0.3);opacity:0}}
+
+.popup{position:absolute;font-weight:800;font-size:14px;pointer-events:none;opacity:0;transform:translateY(0);transition:all 600ms ease-out}
+.popup.show{opacity:1;transform:translateY(-28px)}
+
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.small{font-size:13px;opacity:0.85}
+
+@media (max-width:720px){.board{gap:12px;padding:12px}.hole{height:120px}.headWrap{width:68px;height:68px}.headInner{width:130px;height:130px}}
