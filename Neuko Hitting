@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>9 Delik - Kafaya Vur Oyunu</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--hole:#081024;--accent:#ffce00}
+    *{box-sizing:border-box;font-family:Inter,Segoe UI,system-ui,Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#021428 0%,#071026 100%);color:#e6eef8}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .game{width:920px;max-width:100%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .title{font-size:20px;font-weight:700;display:flex;gap:12px;align-items:center}
+    .controls{display:flex;gap:8px;align-items:center}
+    button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    .stats{display:flex;gap:14px;align-items:center}
+    .stat{background:rgba(255,255,255,0.02);padding:8px 12px;border-radius:10px;font-weight:600}
+
+    .board{width:640px;max-width:100%;margin:16px auto 8px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border-radius:12px}
+    .hole{position:relative;height:160px;background:radial-gradient(circle at 50% 30%, #0b2b3f, #041726 35%, #021321 60%);border-radius:12px;overflow:visible;display:flex;align-items:end;justify-content:center}
+
+    /* delik kapağı */
+    .cap{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;width:82%;height:40px;background:linear-gradient(180deg,#061626,#03202b);border-radius:999px;box-shadow: inset 0 -6px 16px rgba(0,0,0,0.5)}
+
+    .head{position:absolute;left:50%;transform:translate(-50%,60%);width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform 220ms cubic-bezier(.2,.9,.3,1);pointer-events:auto}
+    .head.pop{transform:translate(-50%,-8%)}
+    .head svg{width:82px;height:82px;user-select:none}
+
+    /* hit effect */
+    .hit{animation:shake 300ms ease-out;}
+    @keyframes shake{0%{transform:translate(-50%,-8%) rotate(0)}25%{transform:translate(-50%,-8%) rotate(-12deg)}50%{transform:translate(-50%,-8%) rotate(8deg)}75%{transform:translate(-50%,-8%) rotate(-6deg)}100%{transform:translate(-50%,-8%) rotate(0)} }
+
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .small{font-size:13px;opacity:0.8}
+
+    /* responsive */
+    @media (max-width:720px){.board{gap:12px;padding:12px}.hole{height:120px}.head{width:68px;height:68px}.cap{height:36px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="game" role="application" aria-label="9 delik kafa vuruş oyunu">
+      <div class="top">
+        <div class="title">🕳️ 9 Delik - Kafaya Vur</div>
+        <div class="controls">
+          <button id="startBtn">Başlat</button>
+          <button id="stopBtn" class="secondary">Durdur</button>
+          <div class="stats">
+            <div class="stat">Süre: <span id="time">30</span>s</div>
+            <div class="stat">Skor: <span id="score">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="board" class="board" aria-live="polite">
+        <!-- 9 delik otomatik oluşturulacak -->
+      </div>
+
+      <div class="footer">
+        <div class="small">Her vurduğunda kafa ifadesi değişir. Zorluk artışı ve süre seçenekleri için kodu düzenleyebilirsiniz.</div>
+        <div class="small">Hazırlandı — kaydet ve tarayıcıda aç.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Basit, tek dosya oyunu
+    const board = document.getElementById('board');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const timeEl = document.getElementById('time');
+    const scoreEl = document.getElementById('score');
+
+    const GAME_TIME = 30; // saniye
+    let timeLeft = GAME_TIME;
+    let score = 0;
+    let popInterval = null;
+    let countdown = null;
+    let active = false;
+
+    // SVG avatarlar: neutral -> hit -> dizzy
+    const svgNeutral = `
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="g" cx="30%" cy="30%">
+          <stop offset="0%" stop-color="#fff59a" />
+          <stop offset="100%" stop-color="#ffc107" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="url(#g)" stroke="#e0a800" stroke-width="3" />
+      <!-- gözler -->
+      <circle cx="70" cy="85" r="10" fill="#222" />
+      <circle cx="130" cy="85" r="10" fill="#222" />
+      <!-- ağız -->
+      <path d="M68 125 Q100 150 132 125" stroke="#5a2f00" stroke-width="6" fill="none" stroke-linecap="round" />
+    </svg>`;
+
+    const svgHit = `
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="h" cx="30%" cy="30%">
+          <stop offset="0%" stop-color="#ffd699" />
+          <stop offset="100%" stop-color="#ffb300" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="url(#h)" stroke="#e08a00" stroke-width="3" />
+      <!-- gözler çarpraz -->
+      <g stroke="#222" stroke-width="6" stroke-linecap="round">
+        <line x1="62" y1="76" x2="78" y2="92" />
+        <line x1="78" y1="76" x2="62" y2="92" />
+        <line x1="128" y1="76" x2="142" y2="92" />
+        <line x1="142" y1="76" x2="128" y2="92" />
+      </g>
+      <!-- ağz acik -->
+      <ellipse cx="100" cy="135" rx="24" ry="18" fill="#5a2f00" />
+    </svg>`;
+
+    const svgDizzy = `
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="z" cx="30%" cy="30%">
+          <stop offset="0%" stop-color="#fff7cc" />
+          <stop offset="100%" stop-color="#ffb300" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="url(#z)" stroke="#d78f00" stroke-width="3" />
+      <!-- gözler kapali -->
+      <path d="M60 86 q20 20 40 0" stroke="#222" stroke-width="7" stroke-linecap="round" fill="none" />
+      <path d="M120 86 q20 20 40 0" stroke="#222" stroke-width="7" stroke-linecap="round" fill="none" />
+      <!-- spiral simge -->
+      <g transform="translate(60,40) scale(0.9)">
+        <path d="M40 30 q30 10 60 0 q-10 20 -30 30 q-10 10 -20 -10" stroke="#7a3b00" stroke-width="6" fill="none" stroke-linecap="round" />
+      </g>
+    </svg>`;
+
+    // Delikleri oluştur
+    for(let i=0;i<9;i++){
+      const hole = document.createElement('div');
+      hole.className = 'hole';
+      hole.dataset.index = i;
+
+      const head = document.createElement('div');
+      head.className = 'head';
+      head.innerHTML = svgNeutral;
+      head.setAttribute('role','button');
+      head.setAttribute('aria-pressed','false');
+      head.tabIndex = 0;
+
+      const cap = document.createElement('div');
+      cap.className = 'cap';
+
+      hole.appendChild(head);
+      hole.appendChild(cap);
+      board.appendChild(hole);
+
+      // Tıklama / dokunma
+      head.addEventListener('pointerdown', (e)=>{
+        if(!active) return;
+        if(!head.classList.contains('pop')) return; // sadece çıkmış başa vur
+        // vurma efekti
+        head.classList.add('hit');
+        head.innerHTML = svgHit;
+        head.setAttribute('aria-pressed','true');
+        score += 1;
+        scoreEl.textContent = score;
+        // kısa süre sonra sersem hali göster
+        setTimeout(()=>{ head.innerHTML = svgDizzy; head.classList.remove('hit'); }, 220);
+        // sonra tekrar nötr ve geri in
+        setTimeout(()=>{ head.innerHTML = svgNeutral; head.classList.remove('pop'); head.setAttribute('aria-pressed','false'); }, 900);
+      });
+
+      // klavye erişilebilirlik (Enter/Space)
+      head.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); head.dispatchEvent(new PointerEvent('pointerdown')); }
+      });
+    }
+
+    const holes = Array.from(document.querySelectorAll('.hole'));
+
+    function randomHole(){
+      const idx = Math.floor(Math.random()*holes.length);
+      return holes[idx];
+    }
+
+    function popOne(){
+      const hole = randomHole();
+      const head = hole.querySelector('.head');
+      if(head.classList.contains('pop')) return; // zaten çıkmışsa atla
+      head.classList.add('pop');
+      head.innerHTML = svgNeutral;
+      // pop süresi rastgele (daha düşük ile zorlaştır)
+      const stay = 600 + Math.random()*900; // ms
+      setTimeout(()=>{
+        // sadece geri al eğer hâlâ pop ise
+        if(head.classList.contains('pop')){
+          head.classList.remove('pop');
+        }
+      }, stay);
+    }
+
+    function startGame(){
+      if(active) return;
+      active = true;
+      score = 0; scoreEl.textContent = score;
+      timeLeft = GAME_TIME; timeEl.textContent = timeLeft;
+
+      // her 350-900ms arası bir kafa çıkar
+      popInterval = setInterval(()=>{ popOne(); }, 400);
+
+      countdown = setInterval(()=>{
+        timeLeft -= 1; timeEl.textContent = timeLeft;
+        // hafif zorluk artışı
+        if(timeLeft === Math.floor(GAME_TIME*0.6)){
+          clearInterval(popInterval);
+          popInterval = setInterval(popOne, 340);
+        }
+        if(timeLeft === Math.floor(GAME_TIME*0.3)){
+          clearInterval(popInterval);
+          popInterval = setInterval(popOne, 280);
+        }
+        if(timeLeft <= 0){ stopGame(); }
+      },1000);
+    }
+
+    function stopGame(){
+      active = false;
+      clearInterval(popInterval); popInterval = null;
+      clearInterval(countdown); countdown = null;
+      // tüm kafaları kapat
+      document.querySelectorAll('.head').forEach(h=>{ h.classList.remove('pop'); h.classList.remove('hit'); h.innerHTML = svgNeutral; h.setAttribute('aria-pressed','false'); });
+    }
+
+    startBtn.addEventListener('click', ()=> startGame());
+    stopBtn.addEventListener('click', ()=> stopGame());
+
+    // küçük iyileştirme: mobilde dokunmalarda seçim gecikmesi olmasın
+    document.addEventListener('touchstart', ()=>{}, {passive:true});
+
+    // erişilebilirlik: odak hareketi
+    board.addEventListener('keydown',(e)=>{
+      // ESC ile durdur
+      if(e.key === 'Escape') stopGame();
+    });
+
+  </script>
+</body>
+</html>
