@@ -28,13 +28,13 @@ button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .overlay svg{width:88px;height:88px}
 
-.particle{position:absolute;width:10px;height:10px;border-radius:50%;opacity:0.95;transform:translate(-50%,-50%);animation:part 700ms ease-out forwards}
-@keyframes part{to{transform:translate(-50%,-160%) scale(0.3);opacity:0}}
+.particle{position:absolute;width:10px;height:10px;border-radius:50%;opacity:1;transform:translate(-50%,-50%);animation:part 700ms ease-out forwards}
+@keyframes part{to{transform:translate(-50%,-160%) scale(0.3);opacity:1}}
 
-.popup{position:absolute;font-weight:800;font-size:14px;pointer-events:none;opacity:0;transform:translateY(0);transition:all 600ms ease-out}
+.popup{position:absolute;font-weight:800;font-size:14px;pointer-events:none;opacity:1;transform:translateY(0);transition:all 600ms ease-out}
 .popup.show{opacity:1;transform:translateY(-28px)}
 
 .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-.small{font-size:13px;opacity:0.85}
+.small{font-size:13px;opacity:1}
 
 @media (max-width:720px){.board{gap:12px;padding:12px}.hole{height:120px}.headWrap{width:68px;height:68px}.headInner{width:130px;height:130px}}
